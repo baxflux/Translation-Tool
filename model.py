@@ -1,8 +1,17 @@
 from transformers import MarianMTModel, MarianTokenizer
 import logging
+import json
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+try:
+    with open('it_glossary.json', 'r', encoding='utf-8') as f:
+        it_glossary = json.load(f)
+    logger.info("Loaded IT glossary")
+except FileNotFoundError:
+    it_glossary = {}
+    logger.warning("IT glossary not found, using default translation")
 
 model_name = "Helsinki-NLP/opus-mt-en-vi"
 try:
@@ -13,6 +22,11 @@ except Exception as e:
     logger.error(f"Error loading model: {e}")
     raise
 
+def apply_glossary(text, glossary):
+    for en_term, vi_term in glossary.items():
+        text = text.replace(en_term, vi_term)
+    return text
+
 def translate(texts):
     try:
         if isinstance(texts, str):
@@ -20,6 +34,8 @@ def translate(texts):
         if not texts or any(not text.strip() for text in texts):
             logger.error("Empty or invalid input")
             return {"error": "Input text cannot be empty"}
+        
+        texts = [apply_glossary(text, it_glossary) for text in texts]
         
         inputs = tokenizer(texts, return_tensors="pt", padding=True, truncation=True, max_length=512)
         translated = model.generate(**inputs)
@@ -33,8 +49,8 @@ def translate(texts):
 
 if __name__ == "__main__":
     sample_texts = [
-        "The weather is nice today.",
-        "The API endpoint is secure."
+        "The API endpoint is secure.",
+        "Debug the software carefully."
     ]
     results = translate(sample_texts)
     if isinstance(results, dict) and "error" in results:
