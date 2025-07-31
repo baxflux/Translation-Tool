@@ -46,16 +46,3 @@ def translate(texts):
     except Exception as e:
         logger.error(f"Error during translation: {e}")
         return {"error": str(e)}
-
-if __name__ == "__main__":
-    sample_texts = [
-        "The API endpoint is secure.",
-        "Debug the software carefully."
-    ]
-    results = translate(sample_texts)
-    if isinstance(results, dict) and "error" in results:
-        print(f"Error: {results['error']}")
-    else:
-        for original, translated in zip(sample_texts, results):
-            print(f"Original: {original}")
-            print(f"Translated: {translated}\n")
